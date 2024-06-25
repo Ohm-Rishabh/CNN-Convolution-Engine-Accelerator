@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module mac_manual #( //MAC Operation
+module mac_manual #(
 	  parameter N = 16,
     parameter Q = 12
     )(
