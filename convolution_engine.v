@@ -1,19 +1,18 @@
 `timescale 1ns / 1ps
 
-module mac_manual #(
-	  parameter N = 16,
-    parameter Q = 12
+module mac #(
+	  parameter n = 16
     )(
-    input clk,sclr,ce,
-    input [N-1:0] a,
-    input [N-1:0] b,
-    input [N-1:0] c,
-    output reg [N-1:0] p
+    input clk,rst,ce,
+    input [n-1:0] a,
+    input [n-1:0] b,
+    input [n-1:0] c,
+    output reg [n-1:0] p
     );
 
-always@(posedge clk,posedge sclr)
+always@(posedge clk,posedge rst)
  begin
-    if(sclr)
+    if(rst)
     begin
         p<=0;
     end
@@ -24,19 +23,19 @@ always@(posedge clk,posedge sclr)
  end
 endmodule
 
-module variable_shift_reg #(parameter WIDTH = 8, parameter SIZE = 3) ( 
+module variable_shift_reg #(parameter width = 8, parameter size = 3) ( 
 input clk,                                 
 input ce,                                                
 input rst,                                 
-input [WIDTH-1:0] data_in,                  
-output [WIDTH-1:0] data_out                 
+input [width-1:0] data_in,                  
+output [width-1:0] data_out                 
 );
     
-reg [WIDTH-1:0] sr [SIZE-1:0];          
+reg [width-1:0] sr [size-1:0];          
 
 generate
 genvar i;
-for(i = 0;i < SIZE;i = i + 1)
+for(i = 0;i < size;i = i + 1)
 begin
     always@(posedge clk or posedge rst)
     begin
@@ -61,22 +60,21 @@ begin
     end
 end
 endgenerate
-assign data_out = sr[SIZE-1];
+assign data_out = sr[size-1];
 endmodule
 
 module convolver #(
 parameter n = 9'h00a,     
 parameter k = 9'h003,     
 parameter s = 1,          
-parameter N = 16,        
-parameter Q = 12       
+parameter n = 16    
 )(
 input clk,
 input ce,
 input global_rst,
-input [N-1:0] activation,
+input [n-1:0] activation,
 input [(k*k)*16-1:0] weight1,
-output[N-1:0] conv_op,
+output[n-1:0] conv_op,
 output valid_conv,
 output end_conv
 );
@@ -91,7 +89,7 @@ generate
 	genvar l;
 	for(l=0;l<k*k;l=l+1)
 	begin
-      assign weight [l][N-1:0] = weight1[N*l +: N]; 		
+      assign weight [l][n-1:0] = weight1[n*l +: n]; 		
 	end	
 endgenerate
 
@@ -106,10 +104,10 @@ genvar i;
       if(i==k*k-1)                        
       begin
       (* use_dsp = "yes" *)             
-      mac_manual #(.N(N),.Q(Q)) mac(      
+      mac #(.n(n)) mac(      
         .clk(clk),                      
         .ce(ce),                       
-        .sclr(global_rst),                
+        .rst(global_rst),                
         .a(activation),                   
         .b(weight[i]),                   
         .c(tmp[i]),                   
@@ -118,18 +116,18 @@ genvar i;
       end
       else
       begin
-      wire [N-1:0] tmp2;
-      mac_manual #(.N(N),.Q(Q)) mac(                   
+      wire [n-1:0] tmp2;
+      mac #(.n(n)) mac(                   
         .clk(clk), 
         .ce(ce), 
-        .sclr(global_rst), 
+        .rst(global_rst), 
         .a(activation), 
         .b(weight[i]), 
         .c(tmp[i]), 
         .p(tmp2) 
         );
       
-      variable_shift_reg #(.WIDTH(32),.SIZE(n-k)) SR (
+      variable_shift_reg #(.width(32),.size(n-k)) SR (
           .clk(clk),               
           .ce(ce),                  
           .rst(global_rst),          
@@ -141,10 +139,10 @@ genvar i;
     else
     begin
     (* use_dsp = "yes" *)               
-   mac_manual #(.N(N),.Q(Q)) mac2(                    
+   mac #(.n(n)) mac2(                    
       .clk(clk), 
       .ce(ce),
-      .sclr(global_rst),
+      .rst(global_rst),
       .a(activation),
       .b(weight[i]),
       .c(tmp[i]), 
